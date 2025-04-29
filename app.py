@@ -47,7 +47,8 @@ st.title("Stroke Risk Prediction App")
 
 # Collect user input
 age = st.slider("Age", 0, 100, 30)
-gender = st.selectbox("Gender", ['Male', 'Female'])
+gender_input = st.selectbox("Gender", ['Male', 'Female'])
+gender_encoded = int(le_gender.transform([gender_input])[0])  # Ensure integer
 
 chest_pain = st.checkbox("Chest Pain")
 high_blood_pressure = st.checkbox("High Blood Pressure")
@@ -67,13 +68,11 @@ anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 
 # Predict button
 if st.button("Predict Stroke Risk"):
-    # Process inputs
     age_cat = categorize_age(age)
     age_encoded = one_hot_encode_age(age_cat)
-    gender_encoded = le_gender.transform([gender])[0]  # Ensure string is passed
 
     # Combine all features into single input array
-    input_data = np.array([[
+    input_data = np.array([[ 
         age,
         gender_encoded,
         int(chest_pain),
@@ -91,13 +90,12 @@ if st.button("Predict Stroke Risk"):
         int(cold_hands_feet),
         int(snoring_sleep_apnea),
         int(anxiety_doom),
-        *age_encoded  # Unpack one-hot-encoded age category
+        *age_encoded  # One-hot-encoded age category
     ]])
 
     # Make predictions
     class_pred = model_classification.predict(input_data)[0]
     reg_pred = model_regression.predict(input_data)[0]
 
-    # Display results
     st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
     st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
