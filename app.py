@@ -58,10 +58,10 @@ if st.button("Predict Stroke Risk"):
     input_data = input_data.reshape(1, -1)  # Reshape if necessary
 
     # Classification Model: Predict if the person is at risk
-    risk_classification = clf_model.predict(input_data)[0]
+    risk_classification = classification_model.predict(input_data)[0]
 
     # Regression Model: Predict the stroke risk percentage
-    stroke_risk_percentage = reg_model.predict(input_data)[0]
+    stroke_risk_percentage = regression_model.predict(input_data)[0]
 
     # Show the results
     if risk_classification == 1:
