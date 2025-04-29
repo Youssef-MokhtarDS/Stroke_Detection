@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 import pickle
 import os
+
+# Change the current working directory to the script's location
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Load the classification model and regression model
@@ -53,9 +55,17 @@ if st.button("Predict Stroke Risk"):
         int(discomfort),
         int(cold_feet),
         int(snoring),
-        int(anxiety)
+        int(anxiety),
+        0,  # Placeholder for any missing features
+        0,  # Placeholder for any missing features
+        0,  # Placeholder for any missing features
+        0,  # Placeholder for any missing features
+        0,  # Placeholder for any missing features
+        0   # Placeholder for any missing features
     ]])
-      # Reshape if necessary
+
+    # Check if the input data shape is correct
+    st.write(f"Input data shape: {input_data.shape}")
 
     # Classification Model: Predict if the person is at risk
     risk_classification = classification_model.predict(input_data)[0]
@@ -68,4 +78,3 @@ if st.button("Predict Stroke Risk"):
         st.success(f"Prediction: At Risk (Risk Percentage: {stroke_risk_percentage:.2f}%)")
     else:
         st.success(f"Prediction: Not at Risk (Risk Percentage: {stroke_risk_percentage:.2f}%)")
-    
