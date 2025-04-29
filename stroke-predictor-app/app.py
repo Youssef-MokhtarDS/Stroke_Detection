@@ -1,14 +1,15 @@
-
 import streamlit as st
 import numpy as np
 import pickle
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Load the classification model and regression model
 with open("stroke_risk_classification_model.pkl", "rb") as f:
     classification_model = pickle.load(f)
 
-with open('stroke_risk_regression_model.pkl','rb') as f:
-    reg_model = pickle.load(f)
+with open("stroke_risk_regression_model.pkl", "rb") as f:
+    regression_model = pickle.load(f)
 
 # Define the app title
 st.title("Stroke Risk Prediction App")
