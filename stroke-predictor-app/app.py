@@ -4,10 +4,10 @@ import numpy as np
 import pickle
 
 # Load the classification model and regression model
-with open('stroke_risk_classification_model.pkl', 'rb') as f:
+with open('stroke_risk_classification_model.pkl','rb') as f:
     clf_model = pickle.load(f)
 
-with open('stroke_risk_regression_model.pkl', 'rb') as f:
+with open('stroke_risk_regression_model.pkl','rb') as f:
     reg_model = pickle.load(f)
 
 # Define the app title
