@@ -9,8 +9,8 @@ with open('stroke_risk_classification_model.pkl', 'rb') as f:
 with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
 
-with open('gender_label_encoder.pkl', 'rb') as f:
-    le_gender = pickle.load(f)
+le_gender = joblib.load('gender_label_encoder.pkl')
+
 
 # Define age category function
 def categorize_age(age):
