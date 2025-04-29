@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 import pickle
-
+import joblib
 # Load the trained models and encoders
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
