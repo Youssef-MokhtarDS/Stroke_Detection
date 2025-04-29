@@ -2,8 +2,8 @@ import streamlit as st
 import numpy as np
 import pickle
 import joblib
-# Load the trained models and encoders
 
+# Load the trained models and encoders
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
@@ -11,9 +11,6 @@ with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
 
 le_gender = joblib.load('gender_label_encoder.pkl')
-gender_input = st.selectbox("Gender", ["Male", "Female"])
-gender_encoded = le_gender.transform([gender_input])[0]  # Make sure it's an integer
-
 
 # Define age category function
 def categorize_age(age):
@@ -36,7 +33,7 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encoding map for age categories (matching training data)
+# One-hot encoding map for age categories
 def one_hot_encode_age(age_category):
     return [
         1 if age_category == 'Adult' else 0,
@@ -70,9 +67,10 @@ anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 
 # Predict button
 if st.button("Predict Stroke Risk"):
+    # Process inputs
     age_cat = categorize_age(age)
     age_encoded = one_hot_encode_age(age_cat)
-    gender_encoded = le_gender.transform([gender])[0]
+    gender_encoded = le_gender.transform([gender])[0]  # Ensure string is passed
 
     # Combine all features into single input array
     input_data = np.array([[
@@ -96,8 +94,10 @@ if st.button("Predict Stroke Risk"):
         *age_encoded  # Unpack one-hot-encoded age category
     ]])
 
+    # Make predictions
     class_pred = model_classification.predict(input_data)[0]
     reg_pred = model_regression.predict(input_data)[0]
 
+    # Display results
     st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
     st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
