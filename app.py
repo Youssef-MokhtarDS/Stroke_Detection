@@ -1,7 +1,6 @@
-import pandas as pd
+import streamlit as st
 import numpy as np
-from sklearn.externals import joblib
-from sklearn.preprocessing import LabelEncoder
+import pickle
 
 # Load the trained models (ensure you have saved them)
 model_classification = joblib.load('random_forest_classification_model.pkl')  # Replace with your actual model file
