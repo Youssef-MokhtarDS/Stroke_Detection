@@ -55,6 +55,7 @@ if st.button("Predict Stroke Risk"):
         int(snoring),
         int(anxiety)
     ]])
+    input_data = input_data.reshape(1, -1)  # Reshape if necessary
 
     # Classification Model: Predict if the person is at risk
     risk_classification = clf_model.predict(input_data)[0]
