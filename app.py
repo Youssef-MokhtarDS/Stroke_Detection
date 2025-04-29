@@ -37,10 +37,10 @@ anxiety = st.checkbox("Anxiety/Doom")
 
 # Button to trigger prediction
 if st.button("Predict Stroke Risk"):
-    # Prepare input data for the models (ensure it has exactly 22 features)
+    # Prepare input data for the models (ensure it has exactly 18 features)
     input_data = np.array([[
         age,
-        1 if gender == "Male" else 0,
+        1 if gender == "Male" else 0,  # Gender encoded as 1 for Male, 0 for Female
         int(chest_pain),
         int(high_bp),
         int(irregular_heartbeat),
