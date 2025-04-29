@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import joblib
 # Load the trained models and encoders
+
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
@@ -10,6 +11,8 @@ with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
 
 le_gender = joblib.load('gender_label_encoder.pkl')
+gender_input = st.selectbox("Gender", ["Male", "Female"])
+gender_encoded = le_gender.transform([gender_input])[0]  # Make sure it's an integer
 
 
 # Define age category function
