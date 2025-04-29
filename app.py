@@ -3,10 +3,10 @@ import numpy as np
 import pickle
 
 # Load the trained models and encoders
-with open('random_forest_classification_model.pkl', 'rb') as f:
+with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
-with open('random_forest_regression_model.pkl', 'rb') as f:
+with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
 
 with open('label_encoder_gender.pkl', 'rb') as f:
