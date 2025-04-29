@@ -47,7 +47,7 @@ st.title("Stroke Risk Prediction App")
 
 # Collect user input
 age = st.slider("Age", 0, 100, 30)
-gender_input = st.selectbox("Gender", ['Male', 'Female'])
+
 gender_encoded = int(le_gender.transform([gender_input])[0])  # Ensure integer
 
 chest_pain = st.checkbox("Chest Pain")
