@@ -2,14 +2,17 @@ import streamlit as st
 import numpy as np
 import pickle
 
-# Load the trained models (ensure you have saved them)
-model_classification = joblib.load('random_forest_classification_model.pkl')  # Replace with your actual model file
-model_regression = joblib.load('random_forest_regression_model.pkl')  # Replace with your actual model file
+# Load the trained models and encoders
+with open('random_forest_classification_model.pkl', 'rb') as f:
+    model_classification = pickle.load(f)
 
-# Load label encoder for Gender and AgeCategory encoding
-le_gender = joblib.load('label_encoder_gender.pkl')  # Replace with your actual label encoder file
+with open('random_forest_regression_model.pkl', 'rb') as f:
+    model_regression = pickle.load(f)
 
-# Define a function to categorize age
+with open('label_encoder_gender.pkl', 'rb') as f:
+    le_gender = pickle.load(f)
+
+# Define age category function
 def categorize_age(age):
     if age >= 0 and age <= 1:
         return 'New Born'
@@ -30,104 +33,68 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# Define a function to preprocess the data
-def preprocess_input_data(age, gender, chest_pain, high_blood_pressure, irregular_heartbeat, 
-                          shortness_of_breath, fatigue_weakness, dizziness, swelling_edema, 
-                          neck_jaw_pain, excessive_sweating, persistent_cough, nausea_vomiting, 
-                          chest_discomfort, cold_hands_feet, snoring_sleep_apnea, anxiety_doom):
-    
-    # Age Category (One-hot encode)
-    age_category = categorize_age(age)
-    age_category_dict = {
-        'New Born': [1, 0, 0, 0],
-        'Toddler': [0, 1, 0, 0],
-        'Preschooler': [0, 0, 1, 0],
-        'School Age': [0, 0, 0, 1],
-        'Teenager': [0, 0, 0, 1],
-        'Adolescence': [0, 0, 0, 1],
-        'Adult': [1, 0, 0, 0],
-        'Middle Aged': [0, 1, 0, 0],
-        'Senior': [0, 0, 1, 0],
-    }
-    
-    # Age Category One-hot encoding
-    age_category_encoded = age_category_dict.get(age_category, [0, 0, 0, 0])
+# One-hot encoding map for age categories (matching training data)
+def one_hot_encode_age(age_category):
+    return [
+        1 if age_category == 'Adult' else 0,
+        1 if age_category == 'Middle Aged' else 0,
+        1 if age_category == 'Senior' else 0,
+        1 if age_category == 'Teenager' else 0,
+    ]
 
-    # Gender Encoding
+# Streamlit UI
+st.title("Stroke Risk Prediction App")
+
+# Collect user input
+age = st.slider("Age", 0, 100, 30)
+gender = st.selectbox("Gender", ['Male', 'Female'])
+
+chest_pain = st.checkbox("Chest Pain")
+high_blood_pressure = st.checkbox("High Blood Pressure")
+irregular_heartbeat = st.checkbox("Irregular Heartbeat")
+shortness_of_breath = st.checkbox("Shortness of Breath")
+fatigue_weakness = st.checkbox("Fatigue or Weakness")
+dizziness = st.checkbox("Dizziness")
+swelling_edema = st.checkbox("Swelling or Edema")
+neck_jaw_pain = st.checkbox("Neck or Jaw Pain")
+excessive_sweating = st.checkbox("Excessive Sweating")
+persistent_cough = st.checkbox("Persistent Cough")
+nausea_vomiting = st.checkbox("Nausea or Vomiting")
+chest_discomfort = st.checkbox("Chest Discomfort")
+cold_hands_feet = st.checkbox("Cold Hands or Feet")
+snoring_sleep_apnea = st.checkbox("Snoring or Sleep Apnea")
+anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
+
+# Predict button
+if st.button("Predict Stroke Risk"):
+    age_cat = categorize_age(age)
+    age_encoded = one_hot_encode_age(age_cat)
     gender_encoded = le_gender.transform([gender])[0]
 
-    # Prepare input data array for prediction
-    input_data = np.array([[ 
-        age,  # Age
-        gender_encoded,  # Gender
-        chest_pain,  # Chest Pain
-        high_blood_pressure,  # High Blood Pressure
-        irregular_heartbeat,  # Irregular Heartbeat
-        shortness_of_breath,  # Shortness of Breath
-        fatigue_weakness,  # Fatigue/Weakness
-        dizziness,  # Dizziness
-        swelling_edema,  # Swelling Edema
-        neck_jaw_pain,  # Neck/Jaw Pain
-        excessive_sweating,  # Excessive Sweating
-        persistent_cough,  # Persistent Cough
-        nausea_vomiting,  # Nausea/Vomiting
-        chest_discomfort,  # Chest Discomfort
-        cold_hands_feet,  # Cold Hands/Feet
-        snoring_sleep_apnea,  # Snoring/Sleep Apnea
-        anxiety_doom,  # Anxiety/Doom
-        age_category_encoded[0],  # AgeCategory_Adult
-        age_category_encoded[1],  # AgeCategory_Middle Aged
-        age_category_encoded[2],  # AgeCategory_Senior
-        age_category_encoded[3],  # AgeCategory_Teenager
+    # Combine all features into single input array
+    input_data = np.array([[
+        age,
+        gender_encoded,
+        int(chest_pain),
+        int(high_blood_pressure),
+        int(irregular_heartbeat),
+        int(shortness_of_breath),
+        int(fatigue_weakness),
+        int(dizziness),
+        int(swelling_edema),
+        int(neck_jaw_pain),
+        int(excessive_sweating),
+        int(persistent_cough),
+        int(nausea_vomiting),
+        int(chest_discomfort),
+        int(cold_hands_feet),
+        int(snoring_sleep_apnea),
+        int(anxiety_doom),
+        *age_encoded  # Unpack one-hot-encoded age category
     ]])
 
-    return input_data
+    class_pred = model_classification.predict(input_data)[0]
+    reg_pred = model_regression.predict(input_data)[0]
 
-# Initialize the Flask app
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    # Get input data from the form
-    age = float(request.form['age'])
-    gender = request.form['gender']
-    chest_pain = int(request.form['chest_pain'])
-    high_blood_pressure = int(request.form['high_blood_pressure'])
-    irregular_heartbeat = int(request.form['irregular_heartbeat'])
-    shortness_of_breath = int(request.form['shortness_of_breath'])
-    fatigue_weakness = int(request.form['fatigue_weakness'])
-    dizziness = int(request.form['dizziness'])
-    swelling_edema = int(request.form['swelling_edema'])
-    neck_jaw_pain = int(request.form['neck_jaw_pain'])
-    excessive_sweating = int(request.form['excessive_sweating'])
-    persistent_cough = int(request.form['persistent_cough'])
-    nausea_vomiting = int(request.form['nausea_vomiting'])
-    chest_discomfort = int(request.form['chest_discomfort'])
-    cold_hands_feet = int(request.form['cold_hands_feet'])
-    snoring_sleep_apnea = int(request.form['snoring_sleep_apnea'])
-    anxiety_doom = int(request.form['anxiety_doom'])
-    
-    # Preprocess input data
-    input_data = preprocess_input_data(
-        age, gender, chest_pain, high_blood_pressure, irregular_heartbeat, 
-        shortness_of_breath, fatigue_weakness, dizziness, swelling_edema, 
-        neck_jaw_pain, excessive_sweating, persistent_cough, nausea_vomiting, 
-        chest_discomfort, cold_hands_feet, snoring_sleep_apnea, anxiety_doom
-    )
-
-    # Make predictions (classification and regression)
-    classification_prediction = model_classification.predict(input_data)
-    regression_prediction = model_regression.predict(input_data)
-
-    # Return the result
-    return jsonify({
-        'classification_result': classification_prediction[0],
-        'regression_result': regression_prediction[0]
-    })
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
+    st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
