@@ -9,36 +9,6 @@ with open('stroke_risk_classification_model.pkl', 'rb') as f:
 with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
 
-# Define age category function
-def categorize_age(age):
-    if age >= 0 and age <= 1:
-        return 'New Born'
-    elif age > 1 and age <= 3:
-        return 'Toddler'
-    elif age > 3 and age <= 6:
-        return 'Preschooler'
-    elif age > 6 and age <= 12:
-        return 'School Age'
-    elif age > 12 and age < 20:
-        return 'Teenager'
-    elif age >= 20 and age <= 24:
-        return 'Adolescence'
-    elif age > 24 and age <= 39:
-        return 'Adult'
-    elif age > 39 and age <= 59:
-        return 'Middle Aged'
-    else:
-        return 'Senior'
-
-# One-hot encoding for age category
-def one_hot_encode_age(age_category):
-    return [
-        1 if age_category == 'Adult' else 0,
-        1 if age_category == 'Middle Aged' else 0,
-        1 if age_category == 'Senior' else 0,
-        1 if age_category == 'Teenager' else 0,
-    ]
-
 # Streamlit UI
 st.title("🧠 Stroke Risk Prediction App")
 
@@ -66,29 +36,25 @@ anxiety_doom = st.checkbox("Anxiety or Sense of Doom")  # 14th symptom
 
 # Prediction
 if st.button("Predict Stroke Risk"):
-    age_cat = categorize_age(age)
-    age_encoded = one_hot_encode_age(age_cat)
-
-    # Build input array (22 features)
+    # Build input array (17 features)
     input_data = np.array([[ 
-        age,
-        gender_encoded,
-        int(chest_pain),
-        int(high_blood_pressure),
-        int(irregular_heartbeat),
-        int(shortness_of_breath),
-        int(fatigue_weakness),
-        int(dizziness),
-        int(swelling_edema),
-        int(neck_jaw_pain),
-        int(excessive_sweating),
-        int(persistent_cough),
-        int(nausea_vomiting),
-        int(chest_discomfort),
-        int(cold_hands_feet),
-        int(snoring_sleep_apnea),
-        int(anxiety_doom),
-        *age_encoded  # 4 values
+        age,  # Age (numeric value)
+        gender_encoded,  # Gender (0 or 1)
+        int(chest_pain),  # Chest Pain (binary)
+        int(high_blood_pressure),  # High Blood Pressure (binary)
+        int(irregular_heartbeat),  # Irregular Heartbeat (binary)
+        int(shortness_of_breath),  # Shortness of Breath (binary)
+        int(fatigue_weakness),  # Fatigue or Weakness (binary)
+        int(dizziness),  # Dizziness (binary)
+        int(swelling_edema),  # Swelling or Edema (binary)
+        int(neck_jaw_pain),  # Neck or Jaw Pain (binary)
+        int(excessive_sweating),  # Excessive Sweating (binary)
+        int(persistent_cough),  # Persistent Cough (binary)
+        int(nausea_vomiting),  # Nausea or Vomiting (binary)
+        int(chest_discomfort),  # Chest Discomfort (binary)
+        int(cold_hands_feet),  # Cold Hands or Feet (binary)
+        int(snoring_sleep_apnea),  # Snoring or Sleep Apnea (binary)
+        int(anxiety_doom),  # Anxiety or Sense of Doom (binary)
     ]])
 
     # Debugging
