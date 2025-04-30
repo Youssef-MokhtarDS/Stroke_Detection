@@ -1,69 +1,89 @@
 import streamlit as st
 import numpy as np
-import pickle
+import joblib
 
-# Load the trained models
-with open('stroke_risk_classification_model.pkl', 'rb') as f:
-    model_classification = pickle.load(f)
+# ------------------ Load Models ------------------ #
+@st.cache_resource
+def load_models():
+    try:
+        reg = joblib.load('stroke_risk_regression_model.pkl')
+        clf = joblib.load('stroke_risk_classification_model.pkl')
+        return reg, clf
+    except Exception as e:
+        st.error(f"Error loading models: {e}")
+        return None, None
 
-with open('stroke_risk_regression_model.pkl', 'rb') as f:
-    model_regression = pickle.load(f)
+reg_model, clf_model = load_models()
 
-# Streamlit UI
+# ------------------ Streamlit UI ------------------ #
 st.title("🧠 Stroke Risk Prediction App")
+st.markdown("Estimate a patient's **stroke risk percentage** and classify whether they are **at risk** based on symptoms.")
 
-# User inputs
-age = st.slider("Age", 0, 100, 30)
-gender_input = st.selectbox("Gender", ['Male', 'Female'])
-gender_encoded = 1 if gender_input == 'Male' else 0
+# Patient Inputs
+st.header("Patient Information")
 
-# Symptom inputs (14 checkboxes)
-chest_pain = st.checkbox("Chest Pain")
-high_blood_pressure = st.checkbox("High Blood Pressure")
-irregular_heartbeat = st.checkbox("Irregular Heartbeat")
-shortness_of_breath = st.checkbox("Shortness of Breath")
-fatigue_weakness = st.checkbox("Fatigue or Weakness")
-dizziness = st.checkbox("Dizziness")
-swelling_edema = st.checkbox("Swelling or Edema")
-neck_jaw_pain = st.checkbox("Neck or Jaw Pain")
-excessive_sweating = st.checkbox("Excessive Sweating")
-persistent_cough = st.checkbox("Persistent Cough")
-nausea_vomiting = st.checkbox("Nausea or Vomiting")
-chest_discomfort = st.checkbox("Chest Discomfort")
-cold_hands_feet = st.checkbox("Cold Hands or Feet")
-snoring_sleep_apnea = st.checkbox("Snoring or Sleep Apnea")
-anxiety_doom = st.checkbox("Anxiety or Sense of Doom")  # 14th symptom
+col1, col2 = st.columns(2)
+with col1:
+    age = st.slider("Age", 0, 100, 30)
+with col2:
+    st.subheader("Select Gender")
+    male = st.checkbox("Male")
+    female = st.checkbox("Female")
 
-# Prediction
+# Gender Encoding
+if male and female:
+    st.warning("⚠️Please select only one gender.")
+    gender_encoded = None
+elif not male and not female:
+    gender_encoded = None
+else:
+    gender_encoded = 1 if male else 0
+
+# Symptom Checkboxes
+st.subheader("Symptoms Checklist")
+symptoms = {
+    "Chest Pain": st.checkbox("Chest Pain"),
+    "High Blood Pressure": st.checkbox("High Blood Pressure"),
+    "Irregular Heartbeat": st.checkbox("Irregular Heartbeat"),
+    "Shortness of Breath": st.checkbox("Shortness of Breath"),
+    "Fatigue or Weakness": st.checkbox("Fatigue or Weakness"),
+    "Dizziness": st.checkbox("Dizziness"),
+    "Swelling or Edema": st.checkbox("Swelling or Edema"),
+    "Neck or Jaw Pain": st.checkbox("Neck or Jaw Pain"),
+    "Excessive Sweating": st.checkbox("Excessive Sweating"),
+    "Persistent Cough": st.checkbox("Persistent Cough"),
+    "Nausea or Vomiting": st.checkbox("Nausea or Vomiting"),
+    "Chest Discomfort": st.checkbox("Chest Discomfort"),
+    "Cold Hands or Feet": st.checkbox("Cold Hands or Feet"),
+    "Snoring or Sleep Apnea": st.checkbox("Snoring or Sleep Apnea"),
+    "Anxiety or Sense of Doom": st.checkbox("Anxiety or Sense of Doom"),
+}
+
+# ------------------ Prediction ------------------ #
 if st.button("Predict Stroke Risk"):
-    # Build input array (17 features)
-    input_data = np.array([[ 
-        age,  # Age (numeric value)
-        gender_encoded,  # Gender (0 or 1)
-        int(chest_pain),  # Chest Pain (binary)
-        int(high_blood_pressure),  # High Blood Pressure (binary)
-        int(irregular_heartbeat),  # Irregular Heartbeat (binary)
-        int(shortness_of_breath),  # Shortness of Breath (binary)
-        int(fatigue_weakness),  # Fatigue or Weakness (binary)
-        int(dizziness),  # Dizziness (binary)
-        int(swelling_edema),  # Swelling or Edema (binary)
-        int(neck_jaw_pain),  # Neck or Jaw Pain (binary)
-        int(excessive_sweating),  # Excessive Sweating (binary)
-        int(persistent_cough),  # Persistent Cough (binary)
-        int(nausea_vomiting),  # Nausea or Vomiting (binary)
-        int(chest_discomfort),  # Chest Discomfort (binary)
-        int(cold_hands_feet),  # Cold Hands or Feet (binary)
-        int(snoring_sleep_apnea),  # Snoring or Sleep Apnea (binary)
-        int(anxiety_doom),  # Anxiety or Sense of Doom (binary)
-    ]])
+    if gender_encoded is None:
+        st.error("Please select exactly one gender.")
+    elif not reg_model or not clf_model:
+        st.error("Model files not loaded correctly.")
+    else:
+        # Input feature vector (17 features)
+        feature_vector = np.array([[
+            age,
+            gender_encoded,
+            *[int(value) for value in symptoms.values()]
+        ]])
 
-    # Debugging
-    st.write(f"Input data shape: {input_data.shape}")
+        # Predict stroke risk percentage (regression)
+        stroke_risk = reg_model.predict(feature_vector)[0]
 
-    # Make predictions
-    class_pred = model_classification.predict(input_data)[0]
-    reg_pred = model_regression.predict(input_data)[0]
+        # Add predicted percentage to features (18 total)
+        classification_input = np.hstack([feature_vector, [[stroke_risk]]])
 
-    # Show results
-    st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
-    st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
+        # Predict class (0 = Not At Risk, 1 = At Risk)
+        risk_class = clf_model.predict(classification_input)[0]
+
+        # Display results
+        st.markdown("---")
+        st.subheader("Prediction Results")
+        st.success(f"🩺 Risk Category: **{'At Risk' if risk_class == 1 else 'Not At Risk'}**")
+        st.info(f"📊 Estimated Stroke Risk: **{stroke_risk:.2f}%**")
