@@ -37,6 +37,8 @@ def one_hot_encode_age(age_category):
         1 if age_category == 'Middle Aged' else 0,
         1 if age_category == 'Senior' else 0,
         1 if age_category == 'Teenager' else 0,
+        1 if age_category == 'Adolescence' else 0,  # <-- Add this line
+
     ]
 
 # Streamlit UI
