@@ -47,8 +47,8 @@ st.title("Stroke Risk Prediction App")
 
 # Collect user input
 age = st.slider("Age", 0, 100, 30)
-
-gender = st.selectbox("Gender", [1, 0])
+gender_input = st.selectbox("Gender", ['Male', 'Female'])
+gender_encoded = int(le_gender.transform([gender_input])[0])  # Ensure integer
 
 chest_pain = st.checkbox("Chest Pain")
 high_blood_pressure = st.checkbox("High Blood Pressure")
@@ -74,7 +74,7 @@ if st.button("Predict Stroke Risk"):
     # Combine all features into single input array
     input_data = np.array([[ 
         age,
-        int(gender),
+        gender_encoded,
         int(chest_pain),
         int(high_blood_pressure),
         int(irregular_heartbeat),
