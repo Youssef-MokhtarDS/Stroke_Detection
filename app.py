@@ -80,7 +80,7 @@ if st.button("Predict Stroke Risk"):
     # Combine all features into a single input array
     input_data = np.array([[ 
         age,
-        gender_encoded,
+        int(gender_encoded),
         int(chest_pain),
         int(high_blood_pressure),
         int(irregular_heartbeat),
