@@ -2,14 +2,18 @@ import streamlit as st
 import numpy as np
 import pickle
 
-# Load the trained models
+# Load trained models
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
 with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
 
-# Define age category function (updated)
+# Optional: Load saved feature list (if you saved it)
+# with open('features_list.pkl', 'rb') as f:
+#     expected_features = pickle.load(f)
+
+# Age categorization logic
 def categorize_age(age):
     if age >= 0 and age <= 1:
         return 'New Born'
@@ -30,7 +34,7 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encoding for age category (correct columns for model)
+# One-hot encoding function for the 4 age categories used in model
 def one_hot_encode_age(age_category):
     return [
         1 if age_category == 'Adult' else 0,
@@ -42,7 +46,7 @@ def one_hot_encode_age(age_category):
 # Streamlit UI
 st.title("🧠 Stroke Risk Prediction App")
 
-# User inputs
+# Age & gender
 age = st.slider("Age", 0, 100, 30)
 gender_input = st.selectbox("Gender", ['Male', 'Female'])
 gender_encoded = 1 if gender_input == 'Male' else 0
@@ -64,43 +68,45 @@ cold_hands_feet = st.checkbox("Cold Hands or Feet")
 snoring_sleep_apnea = st.checkbox("Snoring or Sleep Apnea")
 anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 
-# Prediction
+# Prediction logic
 if st.button("Predict Stroke Risk"):
-    age_cat = categorize_age(age)
-    age_encoded = one_hot_encode_age(age_cat)  # Ensure this returns 4 values for the categories
+    try:
+        # Age category encoding
+        age_cat = categorize_age(age)
+        age_encoded = one_hot_encode_age(age_cat)  # [Adult, Middle Aged, Senior, Teenager]
 
-    # Debugging: Check one-hot encoding output
-    st.write(f"One-hot encoded age categories: {age_encoded}")
+        # Combine all features in order (22 features total)
+        input_data = np.array([[ 
+            age,
+            gender_encoded,
+            int(chest_pain),
+            int(high_blood_pressure),
+            int(irregular_heartbeat),
+            int(shortness_of_breath),
+            int(fatigue_weakness),
+            int(dizziness),
+            int(swelling_edema),
+            int(neck_jaw_pain),
+            int(excessive_sweating),
+            int(persistent_cough),
+            int(nausea_vomiting),
+            int(chest_discomfort),
+            int(cold_hands_feet),
+            int(snoring_sleep_apnea),
+            int(anxiety_doom),
+            *age_encoded  # 4 values
+        ]])
 
-    # Construct the input array (total of 21 features)
-    input_data = np.array([[ 
-        age,
-        gender_encoded,
-        int(chest_pain),
-        int(high_blood_pressure),
-        int(irregular_heartbeat),
-        int(shortness_of_breath),
-        int(fatigue_weakness),
-        int(dizziness),
-        int(swelling_edema),
-        int(neck_jaw_pain),
-        int(excessive_sweating),
-        int(persistent_cough),
-        int(nausea_vomiting),
-        int(chest_discomfort),
-        int(cold_hands_feet),
-        int(snoring_sleep_apnea),
-        int(anxiety_doom),
-        *age_encoded  # Unpack the one-hot encoded age categories (4 values)
-    ]])
+        st.write(f"Input data shape: {input_data.shape}")  # should be (1, 22)
 
-    # Debugging: Print the shape of input_data
-    st.write(f"Input data shape: {input_data.shape}")
+        # Predict
+        class_pred = model_classification.predict(input_data)[0]
+        reg_pred = model_regression.predict(input_data)[0]
 
-    # Make predictions
-    class_pred = model_classification.predict(input_data)[0]
-    reg_pred = model_regression.predict(input_data)[0]
+        # Results
+        st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
+        st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
 
-    # Show results
-    st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
-    st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
+    except ValueError as e:
+        st.error(f"❌ Model input error: {e}")
+        st.stop()
