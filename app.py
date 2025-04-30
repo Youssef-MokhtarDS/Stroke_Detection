@@ -93,8 +93,8 @@ if st.button("Predict Stroke Risk"):
     ]])
 
     
-        class_pred = model_classification.predict(input_data)[0]
-        reg_pred = model_regression.predict(input_data)[0]
+class_pred = model_classification.predict(input_data)[0]
+reg_pred = model_regression.predict(input_data)[0]
 
-        st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
-        st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
+st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
+st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
