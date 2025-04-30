@@ -48,7 +48,7 @@ st.title("Stroke Risk Prediction App")
 
 # Collect user input
 age = st.slider("Age", 0, 100, 30)
-gender_input = st.selectbox("Gender", ['Male', 'Female'])
+gender_input = st.selectbox("Gender", [1, 0])
 
 # Encode gender using label encoder
 try:
