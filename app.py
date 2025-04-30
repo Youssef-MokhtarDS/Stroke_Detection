@@ -1,13 +1,17 @@
 import streamlit as st
 import numpy as np
 import pickle
+import joblib
 
-# Load models
+# Load the trained models and encoders
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
 with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
+
+# Load the gender label encoder
+le_gender = joblib.load('gender_label_encoder.pkl')
 
 # Define age category function
 def categorize_age(age):
@@ -30,23 +34,30 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encode age category
+# One-hot encoding for only the 4 used age categories
 def one_hot_encode_age(age_category):
     return [
         1 if age_category == 'Adult' else 0,
         1 if age_category == 'Middle Aged' else 0,
         1 if age_category == 'Senior' else 0,
         1 if age_category == 'Teenager' else 0,
-        1 if age_category == 'Adolescence' else 0,  # <-- Add this line
-
     ]
 
 # Streamlit UI
 st.title("Stroke Risk Prediction App")
 
+# Collect user input
 age = st.slider("Age", 0, 100, 30)
-gender = st.selectbox("Gender", ['Male', 'Female'])
+gender_input = st.selectbox("Gender", ['Male', 'Female'])
 
+# Encode gender using label encoder
+try:
+    gender_encoded = int(le_gender.transform([gender_input])[0])
+except Exception as e:
+    st.error(f"Gender encoding failed: {e}")
+    st.stop()
+
+# Symptom inputs
 chest_pain = st.checkbox("Chest Pain")
 high_blood_pressure = st.checkbox("High Blood Pressure")
 irregular_heartbeat = st.checkbox("Irregular Heartbeat")
@@ -63,13 +74,12 @@ cold_hands_feet = st.checkbox("Cold Hands or Feet")
 snoring_sleep_apnea = st.checkbox("Snoring or Sleep Apnea")
 anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 
+# Prediction logic
 if st.button("Predict Stroke Risk"):
     age_cat = categorize_age(age)
     age_encoded = one_hot_encode_age(age_cat)
 
-    # Bypass label encoder
-    gender_encoded = 1 if gender == 'Male' else 0
-
+    # Assemble features
     input_data = np.array([[ 
         age,
         gender_encoded,
@@ -91,8 +101,11 @@ if st.button("Predict Stroke Risk"):
         *age_encoded
     ]])
 
-    class_pred = model_classification.predict(input_data)[0]
-    reg_pred = model_regression.predict(input_data)[0]
+    if input_data.shape[1] != 21:
+        st.error(f"Feature mismatch: model expects 21 features, but got {input_data.shape[1]}")
+    else:
+        class_pred = model_classification.predict(input_data)[0]
+        reg_pred = model_regression.predict(input_data)[0]
 
-    st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
-    st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
+        st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
+        st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
