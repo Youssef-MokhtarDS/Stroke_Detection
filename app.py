@@ -92,6 +92,9 @@ if st.button("Predict Stroke Risk"):
         *age_encoded  # Unpack the one-hot encoded age categories
     ]])
 
+    # Debugging: Print the shape of input_data
+    st.write(f"Input data shape: {input_data.shape}")
+
     # Make predictions
     class_pred = model_classification.predict(input_data)[0]
     reg_pred = model_regression.predict(input_data)[0]
