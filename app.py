@@ -1,37 +1,6 @@
-import streamlit as st
-import numpy as np
-import pickle
-
-# Load the trained models
-with open('stroke_risk_classification_model.pkl', 'rb') as f:
-    model_classification = pickle.load(f)
-
-with open('stroke_risk_regression_model.pkl', 'rb') as f:
-    model_regression = pickle.load(f)
-
-# Define age category function
-def categorize_age(age):
-    if age >= 0 and age <= 1:
-        return 'New Born'
-    elif age > 1 and age <= 3:
-        return 'Toddler'
-    elif age > 3 and age <= 6:
-        return 'Preschooler'
-    elif age > 6 and age <= 12:
-        return 'School Age'
-    elif age > 12 and age < 20:
-        return 'Teenager'
-    elif age >= 20 and age <= 24:
-        return 'Adult'  # Use 'Adult' instead of 'Adolescence'
-    elif age > 24 and age <= 39:
-        return 'Adult'
-    elif age > 39 and age <= 59:
-        return 'Middle Aged'
-    else:
-        return 'Senior'
-
 # One-hot encoding for age category (matching training set)
 def one_hot_encode_age(age_category):
+    # Ensure that all 4 categories are encoded
     return [
         1 if age_category == 'Adult' else 0,
         1 if age_category == 'Middle Aged' else 0,
@@ -67,8 +36,9 @@ anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 # Prediction
 if st.button("Predict Stroke Risk"):
     age_cat = categorize_age(age)
-    age_encoded = one_hot_encode_age(age_cat)
+    age_encoded = one_hot_encode_age(age_cat)  # Ensure this returns 4 values
 
+    # Construct the input array
     input_data = np.array([[ 
         age,
         gender_encoded,
@@ -87,7 +57,7 @@ if st.button("Predict Stroke Risk"):
         int(cold_hands_feet),
         int(snoring_sleep_apnea),
         int(anxiety_doom),
-        *age_encoded
+        *age_encoded  # Unpack the one-hot encoded age categories
     ]])
 
     # Make predictions
