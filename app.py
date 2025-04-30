@@ -22,7 +22,7 @@ def categorize_age(age):
     elif age > 12 and age < 20:
         return 'Teenager'
     elif age >= 20 and age <= 24:
-        return 'Adolescence'
+        return 'Adult'  # Use 'Adult' instead of 'Adolescence'
     elif age > 24 and age <= 39:
         return 'Adult'
     elif age > 39 and age <= 59:
@@ -30,26 +30,24 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encoding for age category (4 categories used in model)
+# One-hot encoding for age category (matching training set)
 def one_hot_encode_age(age_category):
     return [
         1 if age_category == 'Adult' else 0,
         1 if age_category == 'Middle Aged' else 0,
         1 if age_category == 'Senior' else 0,
         1 if age_category == 'Teenager' else 0,
-        
-
     ]
 
 # Streamlit UI
-st.title("Stroke Risk Prediction App")
+st.title("🧠 Stroke Risk Prediction App")
 
-# User input
+# User inputs
 age = st.slider("Age", 0, 100, 30)
 gender_input = st.selectbox("Gender", ['Male', 'Female'])
-gender_encoded = 1 if gender_input == 'Male' else 0  # manual encoding
+gender_encoded = 1 if gender_input == 'Male' else 0
 
-# Symptoms
+# Symptom inputs
 chest_pain = st.checkbox("Chest Pain")
 high_blood_pressure = st.checkbox("High Blood Pressure")
 irregular_heartbeat = st.checkbox("Irregular Heartbeat")
@@ -66,7 +64,7 @@ cold_hands_feet = st.checkbox("Cold Hands or Feet")
 snoring_sleep_apnea = st.checkbox("Snoring or Sleep Apnea")
 anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 
-# Predict
+# Prediction
 if st.button("Predict Stroke Risk"):
     age_cat = categorize_age(age)
     age_encoded = one_hot_encode_age(age_cat)
@@ -92,9 +90,10 @@ if st.button("Predict Stroke Risk"):
         *age_encoded
     ]])
 
-    
-class_pred = model_classification.predict(input_data)[0]
-reg_pred = model_regression.predict(input_data)[0]
+    # Make predictions
+    class_pred = model_classification.predict(input_data)[0]
+    reg_pred = model_regression.predict(input_data)[0]
 
-st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
-st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
+    # Show results
+    st.success(f"Risk Category: {'At Risk' if class_pred == 1 else 'Not At Risk'}")
+    st.info(f"Estimated Stroke Risk Percentage: {reg_pred:.2f}%")
