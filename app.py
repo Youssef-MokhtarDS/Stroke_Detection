@@ -9,7 +9,12 @@ with open('stroke_risk_classification_model.pkl', 'rb') as f:
 with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
 
-# Define age category function
+# Fix AgeCategory typo in the dataset (replace 'Adolescense' with 'Adolescence')
+def fix_age_category(df):
+    df['AgeCategory'] = df['AgeCategory'].replace('Adolescense', 'Adolescence')
+    return df
+
+# Define age category function (updated)
 def categorize_age(age):
     if age >= 0 and age <= 1:
         return 'New Born'
@@ -22,7 +27,7 @@ def categorize_age(age):
     elif age > 12 and age < 20:
         return 'Teenager'
     elif age >= 20 and age <= 24:
-        return 'Adult'  # Use 'Adult' instead of 'Adolescence'
+        return 'Adolescence'  # Updated category
     elif age > 24 and age <= 39:
         return 'Adult'
     elif age > 39 and age <= 59:
@@ -30,14 +35,14 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encoding for age category (matching training set)
+# One-hot encoding for age category (ensure all categories are covered)
 def one_hot_encode_age(age_category):
-    # Ensure that all 4 categories are encoded
     return [
         1 if age_category == 'Adult' else 0,
         1 if age_category == 'Middle Aged' else 0,
         1 if age_category == 'Senior' else 0,
         1 if age_category == 'Teenager' else 0,
+        1 if age_category == 'Adolescence' else 0,  # Add Adolescence as well
     ]
 
 # Streamlit UI
@@ -68,7 +73,10 @@ anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 # Prediction
 if st.button("Predict Stroke Risk"):
     age_cat = categorize_age(age)
-    age_encoded = one_hot_encode_age(age_cat)  # Ensure this returns 4 values
+    age_encoded = one_hot_encode_age(age_cat)  # Ensure this returns 5 values for the categories
+
+    # Debugging: Check one-hot encoding output
+    st.write(f"One-hot encoded age categories: {age_encoded}")
 
     # Construct the input array
     input_data = np.array([[ 
