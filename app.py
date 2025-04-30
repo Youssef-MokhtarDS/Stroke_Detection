@@ -1,29 +1,6 @@
 import streamlit as st
 import numpy as np
 import joblib
-import base64
-
-def get_base64_image(image_path):
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
-
-def set_background(image_path):
-    img_base64 = get_base64_image(image_path)
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("C:\Users\YOUSSEF\Stroke_Detection\bg.jpg,{img_base64}");
-            background-size: cover;
-            background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-set_background("bg.jpg")
-
 # ------------------ Load Models ------------------ #
 @st.cache_resource
 def load_models():
