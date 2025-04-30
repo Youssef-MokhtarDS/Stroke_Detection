@@ -92,9 +92,7 @@ if st.button("Predict Stroke Risk"):
         *age_encoded
     ]])
 
-    if input_data.shape[1] != 22:
-        st.error(f"Feature mismatch: model expects 21 features, but got {input_data.shape[1]}")
-    else:
+    
         class_pred = model_classification.predict(input_data)[0]
         reg_pred = model_regression.predict(input_data)[0]
 
