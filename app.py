@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import joblib
 
-# Load the trained models and encoders
+# Load the trained models and encoder
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
@@ -33,7 +33,7 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encoding map for age categories
+# One-hot encoding map for age categories (matching training data)
 def one_hot_encode_age(age_category):
     return [
         1 if age_category == 'Adult' else 0,
@@ -48,7 +48,6 @@ st.title("Stroke Risk Prediction App")
 # Collect user input
 age = st.slider("Age", 0, 100, 30)
 gender_input = st.selectbox("Gender", ['Male', 'Female'])
-gender_encoded = int(le_gender.transform([gender_input])[0])  # Ensure integer
 
 chest_pain = st.checkbox("Chest Pain")
 high_blood_pressure = st.checkbox("High Blood Pressure")
@@ -71,7 +70,14 @@ if st.button("Predict Stroke Risk"):
     age_cat = categorize_age(age)
     age_encoded = one_hot_encode_age(age_cat)
 
-    # Combine all features into single input array
+    # Encode gender safely
+    gender_encoded = le_gender.transform([gender_input])[0]
+    if isinstance(gender_encoded, np.str_):
+        gender_encoded = 0 if gender_encoded == 'Male' else 1
+    else:
+        gender_encoded = int(gender_encoded)
+
+    # Combine all features into a single input array
     input_data = np.array([[ 
         age,
         gender_encoded,
@@ -90,10 +96,9 @@ if st.button("Predict Stroke Risk"):
         int(cold_hands_feet),
         int(snoring_sleep_apnea),
         int(anxiety_doom),
-        *age_encoded  # One-hot-encoded age category
+        *age_encoded  # Unpack one-hot-encoded age category
     ]])
 
-    # Make predictions
     class_pred = model_classification.predict(input_data)[0]
     reg_pred = model_regression.predict(input_data)[0]
 
