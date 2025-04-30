@@ -1,17 +1,13 @@
 import streamlit as st
 import numpy as np
 import pickle
-import joblib
 
-# Load the trained models and encoders
+# Load the trained models
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
 with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
-
-# Load the gender label encoder
-le_gender = joblib.load('gender_label_encoder.pkl')
 
 # Define age category function
 def categorize_age(age):
@@ -34,7 +30,7 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encoding for only the 4 used age categories
+# One-hot encoding for age category (4 categories used in model)
 def one_hot_encode_age(age_category):
     return [
         1 if age_category == 'Adult' else 0,
@@ -46,18 +42,12 @@ def one_hot_encode_age(age_category):
 # Streamlit UI
 st.title("Stroke Risk Prediction App")
 
-# Collect user input
+# User input
 age = st.slider("Age", 0, 100, 30)
-gender_input = st.selectbox("Gender", [1, 0])
+gender_input = st.selectbox("Gender", ['Male', 'Female'])
+gender_encoded = 1 if gender_input == 'Male' else 0  # manual encoding
 
-# Encode gender using label encoder
-try:
-    gender_encoded = int(le_gender.transform([gender_input])[0])
-except Exception as e:
-    st.error(f"Gender encoding failed: {e}")
-    st.stop()
-
-# Symptom inputs
+# Symptoms
 chest_pain = st.checkbox("Chest Pain")
 high_blood_pressure = st.checkbox("High Blood Pressure")
 irregular_heartbeat = st.checkbox("Irregular Heartbeat")
@@ -74,12 +64,11 @@ cold_hands_feet = st.checkbox("Cold Hands or Feet")
 snoring_sleep_apnea = st.checkbox("Snoring or Sleep Apnea")
 anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 
-# Prediction logic
+# Predict
 if st.button("Predict Stroke Risk"):
     age_cat = categorize_age(age)
     age_encoded = one_hot_encode_age(age_cat)
 
-    # Assemble features
     input_data = np.array([[ 
         age,
         gender_encoded,
