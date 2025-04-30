@@ -1,16 +1,13 @@
 import streamlit as st
 import numpy as np
 import pickle
-import joblib
 
-# Load the trained models and encoder
+# Load models
 with open('stroke_risk_classification_model.pkl', 'rb') as f:
     model_classification = pickle.load(f)
 
 with open('stroke_risk_regression_model.pkl', 'rb') as f:
     model_regression = pickle.load(f)
-
-le_gender = joblib.load('gender_label_encoder.pkl')
 
 # Define age category function
 def categorize_age(age):
@@ -33,7 +30,7 @@ def categorize_age(age):
     else:
         return 'Senior'
 
-# One-hot encoding map for age categories (matching training data)
+# One-hot encode age category
 def one_hot_encode_age(age_category):
     return [
         1 if age_category == 'Adult' else 0,
@@ -45,9 +42,8 @@ def one_hot_encode_age(age_category):
 # Streamlit UI
 st.title("Stroke Risk Prediction App")
 
-# Collect user input
 age = st.slider("Age", 0, 100, 30)
-gender_input = st.selectbox("Gender", ['Male', 'Female'])
+gender = st.selectbox("Gender", ['Male', 'Female'])
 
 chest_pain = st.checkbox("Chest Pain")
 high_blood_pressure = st.checkbox("High Blood Pressure")
@@ -65,22 +61,16 @@ cold_hands_feet = st.checkbox("Cold Hands or Feet")
 snoring_sleep_apnea = st.checkbox("Snoring or Sleep Apnea")
 anxiety_doom = st.checkbox("Anxiety or Sense of Doom")
 
-# Predict button
 if st.button("Predict Stroke Risk"):
     age_cat = categorize_age(age)
     age_encoded = one_hot_encode_age(age_cat)
 
-    # Encode gender safely
-    gender_encoded = le_gender.transform([gender_input])[0]
-    if isinstance(gender_encoded, np.str_):
-        gender_encoded = 0 if gender_encoded == 'Male' else 1
-    else:
-        gender_encoded = int(gender_encoded)
+    # Bypass label encoder
+    gender_encoded = 1 if gender == 'Male' else 0
 
-    # Combine all features into a single input array
     input_data = np.array([[ 
         age,
-        int(gender_encoded),
+        gender_encoded,
         int(chest_pain),
         int(high_blood_pressure),
         int(irregular_heartbeat),
@@ -96,7 +86,7 @@ if st.button("Predict Stroke Risk"):
         int(cold_hands_feet),
         int(snoring_sleep_apnea),
         int(anxiety_doom),
-        *age_encoded  # Unpack one-hot-encoded age category
+        *age_encoded
     ]])
 
     class_pred = model_classification.predict(input_data)[0]
